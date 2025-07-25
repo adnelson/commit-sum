@@ -1,0 +1,15 @@
+#!/bin/sh
+# .git/hooks/prepare-commit-msg
+
+# $1 = path to commit message file
+# $2 = commit source (e.g., message, template, merge, squash)
+# $3 = SHA (for commit --amend)
+
+if [ "$2" = "message" ]; then
+  # User provided a -m message; don't override it
+  exit 0
+fi
+
+# Otherwise, generate a default message
+PATH=$(yarn bin):$PATH
+tsx index.ts > "$1"

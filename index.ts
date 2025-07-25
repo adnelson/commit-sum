@@ -41,7 +41,6 @@ async function main(options: Options) {
   } else if (options.from === "all") {
     diffOpts.unshift("HEAD");
   }
-  console.log({ diffOpts });
   const diff = await git.diff(diffOpts);
 
   if (!diff.trim()) {
