@@ -1,0 +1,17 @@
+{
+  "name": "gen-commit",
+  "version": "0.0.1",
+  "description": "Generate a commit message with OpenAI",
+  "main": "index.ts",
+  "author": "Allen Nelson",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "openai": "^5.10.2",
+    "simple-git": "^3.28.0"
+  }
+}
