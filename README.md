@@ -31,8 +31,9 @@ Options:
 
 You can create a git hook which will automatically invoke this script to create commit messages:
 
-1. Copy the contents of `hooks/prepare-commit-msg`
-2. Paste it into your git hooks folder (i.e. `.git/hooks` or whereever you've configured them)
-3. Run `chmod +x path/to-prepare-commit-msg`
+1. Create `prepare-commit-msg` in your git hooks folder (i.e. `.git/hooks` or whereever you've configured them)
+2. Copy the contents of `hooks/prepare-commit-msg` in this repository and paste it into `prepare-commit-msg`
+3. Replace the command `tsx index.ts` (which is used internally in this repo) with `commit-sum` (the name of the binary provided by this package)
+4. Run `chmod +x path/to/hooks/prepare-commit-msg` to make it executable.
 
-Now whenever you `git commit`, your changes will be summarized by `commit-sum` for you automatically.
+Now whenever you `git commit`, your changes will be summarized by `commit-sum` for you automatically. Note that you can still run `git commit -m "some message"` if you want to commit with a particular message.
