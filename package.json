@@ -2,9 +2,16 @@
   "name": "gen-commit",
   "version": "0.0.1",
   "description": "Generate a commit message with OpenAI",
-  "main": "index.ts",
   "author": "Allen Nelson",
   "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "gen-commit": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@types/node": "^24.1.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
