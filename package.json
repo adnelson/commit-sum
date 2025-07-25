@@ -1,5 +1,5 @@
 {
-  "name": "what-commit",
+  "name": "commit-sum",
   "version": "0.0.1",
   "description": "Generate a commit message with OpenAI",
   "author": "Allen Nelson",
@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "what-commit": "dist/index.js"
+    "commit-sum": "dist/index.js"
   },
   "files": [
     "dist"

@@ -1,4 +1,4 @@
-# `what-commit`
+# `commit-sum`
 
 Tired of struggling to think of everything you're about to commit and how to summarize it? Here's a command-line tool to automatically generate your commit messages.
 
@@ -11,8 +11,8 @@ All you should need for this script to run is a valid OpenAI key under the envir
 You can invoke the cli directly to generate a commit message, or even just to see what you've changed so far. Here are some options:
 
 ```
-> what-commit --help
-Usage: what-commit [options] [directory]
+> commit-sum --help
+Usage: commit-sum [options] [directory]
 
 Generate a commit message with OpenAI
 
@@ -35,4 +35,4 @@ You can create a git hook which will automatically invoke this script to create 
 2. Paste it into your git hooks folder (i.e. `.git/hooks` or whereever you've configured them)
 3. Run `chmod +x path/to-prepare-commit-msg`
 
-Now whenever you `git commit`, your changes will be summarized by `what-commit` for you automatically.
+Now whenever you `git commit`, your changes will be summarized by `commit-sum` for you automatically.
