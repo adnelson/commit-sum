@@ -1,3 +1,5 @@
+import fs from "fs";
+
 import { Command } from "commander";
 import OpenAI from "openai";
 import simpleGit from "simple-git";
@@ -16,21 +18,35 @@ type Options = {
   maxWords?: number;
 };
 
-async function main(options: Options) {
-  const git = simpleGit(options.dir);
+const LOCK_FILES = [
+  "yarn.lock",
+  "package-lock.json",
+  "pnpm-lock.yaml",
+  "Gemfile.lock",
+  "poetry.lock",
+  "Cargo.lock",
+  "uv.lock",
+];
 
-  let diff;
-  if (options.from === "staged") {
-    diff = await git.diff(["--staged", ":!yarn.lock"]);
-  } else if (options.from === "all") {
-    diff = await git.diff(["HEAD", ":!yarn.lock"]);
-  } else {
-    diff = await git.diff([":!yarn.lock"]);
+async function main(options: Options) {
+  process.chdir(options.dir);
+  const git = simpleGit();
+
+  const diffOpts = [];
+  for (const f of LOCK_FILES) {
+    if (fs.existsSync(f)) diffOpts.push(`:!${f}`);
   }
+  if (options.from === "staged") {
+    diffOpts.unshift("--staged");
+  } else if (options.from === "all") {
+    diffOpts.unshift("HEAD");
+  }
+  console.log({ diffOpts });
+  const diff = await git.diff(diffOpts);
 
   if (!diff.trim()) {
-    console.log(`No changes found (mode=${options.from})`);
-    return;
+    console.error(`No changes found (mode=${options.from})`);
+    process.exit(1);
   }
 
   let prompt =
