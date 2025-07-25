@@ -9,13 +9,13 @@
     "@types/node": "^24.1.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
+    "@typescript/native-preview": "^7.0.0-dev.20250530.1",
     "eslint": "^9.32.0",
     "eslint-plugin-import": "^2.32.0",
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
     "tsx": "^4.20.3",
-    "typescript": "^5.8.3",
-    "@typescript/native-preview": "^7.0.0-dev.20250530.1"
+    "typescript": "^5.8.3"
   },
   "dependencies": {
     "openai": "^5.10.2",
@@ -23,6 +23,7 @@
     "zod": "^4.0.10"
   },
   "scripts": {
+    "build": "rm -rf dist && esbuild index.ts --bundle --platform=node --outfile=dist/index.js",
     "prepare": "git config --local core.hooksPath ./hooks"
   },
   "lint-staged": {
