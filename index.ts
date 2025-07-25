@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 import simpleGit from "simple-git";
+import { z } from "zod";
+import { parseArgs } from "util";
 
 if (!process.env.OPENAI_API_KEY) {
   console.error("Error: OPENAI_API_KEY is not set in the environment.");
@@ -11,34 +13,74 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 type Options = {
   dir: string;
   from: "modified" | "staged" | "all";
-}
+  maxWords?: number;
+};
 
 async function main(options: Options) {
   const git = simpleGit(options.dir);
-  const status = await git.status();
-  console.log(status);
 
   let diff;
   if (options.from === "staged") {
-    diff = await git.diff(["--staged"]);
+    diff = await git.diff(["--staged", ":!yarn.lock"]);
   } else if (options.from === "all") {
-    diff = await git.diff(["HEAD"])
+    diff = await git.diff(["HEAD", ":!yarn.lock"]);
   } else {
-    diff = await git.diff();
+    diff = await git.diff([":!yarn.lock"]);
   }
-  console.log(diff);
 
-  return
+  if (!diff.trim()) {
+    console.log(`No changes found (mode=${options.from})`);
+    return;
+  }
+
+  let prompt = "Based on the following diff, generate a git commit message. Your answer should be in the form of a JSON object with a single key, `message`."
+  if (options.maxWords) {
+    prompt += ` The message should be no more than ${options.maxWords} words.`;
+  }
+
   const response = await client.chat.completions.create({
     model: "gpt-4o-mini", // You can change to another model like "gpt-4.1"
-    messages: [{ role: "user", content: "What is the capital of France?" }],
+    messages: [
+      {
+        role: "user",
+        content:
+          prompt + "\n\n```\n" +
+          diff +
+          "\n```\n",
+      },
+    ],
+    response_format: { type: "json_object" },
   });
 
-  console.log(response.choices[0].message.content);
+  let message: string | undefined;
+  try {
+    const contentJson = response.choices[0]?.message.content;
+    if (!contentJson) throw new Error("No content returned in message");
+    message = z.object({ message: z.string() }).parse(JSON.parse(contentJson)).message;
+  } catch (e) {
+    console.error("OpenAI response:", response);
+    throw e;
+  }
+
+  console.log(message);
 }
 
-const dir = process.argv.slice(2).find((arg) => !arg.startsWith("-")) || process.cwd();
-const from = process.argv.includes("--modified") ? "modified" : process.argv.includes("--staged") ? "staged" : process.argv.includes("--all") ? "all" : "staged";
+const { values, positionals } = parseArgs({
+  args: process.argv.slice(2),
+  options: {
+    modified: { type: "boolean" },
+    staged: { type: "boolean" },
+    all: { type: "boolean" },
+    "max-words": { type: "string" } // Using string since parseArgs doesn't support number directly
+  },
+  allowPositionals: true
+});
 
-console.log(dir, from);
-main({ dir, from });
+const dir = positionals[0] || process.cwd();
+const from = values.modified ? "modified"
+  : values.all ? "all"
+  : "staged"; // Default to staged if no flag specified
+
+const maxWords = values["max-words"] ? parseInt(values["max-words"]) : undefined;
+
+main({ dir, from, maxWords });
