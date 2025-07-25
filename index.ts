@@ -1,7 +1,7 @@
+import { Command } from "commander";
 import OpenAI from "openai";
 import simpleGit from "simple-git";
 import { z } from "zod";
-import { parseArgs } from "util";
 
 if (!process.env.OPENAI_API_KEY) {
   console.error("Error: OPENAI_API_KEY is not set in the environment.");
@@ -33,7 +33,8 @@ async function main(options: Options) {
     return;
   }
 
-  let prompt = "Based on the following diff, generate a git commit message. Your answer should be in the form of a JSON object with a single key, `message`."
+  let prompt =
+    "Based on the following diff, generate a git commit message. Your answer should be in the form of a JSON object with a single key, `message`.";
   if (options.maxWords) {
     prompt += ` The message should be no more than ${options.maxWords} words.`;
   }
@@ -43,10 +44,7 @@ async function main(options: Options) {
     messages: [
       {
         role: "user",
-        content:
-          prompt + "\n\n```\n" +
-          diff +
-          "\n```\n",
+        content: prompt + "\n\n```\n" + diff + "\n```\n",
       },
     ],
     response_format: { type: "json_object" },
@@ -65,22 +63,23 @@ async function main(options: Options) {
   console.log(message);
 }
 
-const { values, positionals } = parseArgs({
-  args: process.argv.slice(2),
-  options: {
-    modified: { type: "boolean" },
-    staged: { type: "boolean" },
-    all: { type: "boolean" },
-    "max-words": { type: "string" } // Using string since parseArgs doesn't support number directly
-  },
-  allowPositionals: true
-});
+const program = new Command();
 
-const dir = positionals[0] || process.cwd();
-const from = values.modified ? "modified"
-  : values.all ? "all"
-  : "staged"; // Default to staged if no flag specified
+program
+  .name("gen-commit")
+  .description("Generate a commit message with OpenAI")
+  .argument("[directory]", "Directory to analyze (defaults to current working directory)")
+  .option("--modified", "Generate commit message for modified files")
+  .option("--staged", "Generate commit message for staged files (default)")
+  .option("--all", "Generate commit message for all changes")
+  .option("--max-words <number>", "Maximum number of words in the commit message")
+  .action(async (directory, options) => {
+    const dir = directory || process.cwd();
+    const from = options.modified ? "modified" : options.all ? "all" : "staged";
 
-const maxWords = values["max-words"] ? parseInt(values["max-words"]) : undefined;
+    const maxWords = options.maxWords ? parseInt(options.maxWords) : undefined;
 
-main({ dir, from, maxWords });
+    await main({ dir, from, maxWords });
+  });
+
+program.parse();
