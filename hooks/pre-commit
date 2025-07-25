@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-set -ex
+set -e
+PATH=$(yarn bin):$PATH
+set -x
 
-yarn lint-staged --no-stash
-yarn tsgo --noEmit
+lint-staged --no-stash
+tsgo --noEmit

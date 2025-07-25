@@ -5,8 +5,8 @@
 # $2 = commit source (e.g., message, template, merge, squash)
 # $3 = SHA (for commit --amend)
 
+# Don't bother if the user supplied a message
 if [ "$2" = "message" ]; then
-  # User provided a -m message; don't override it
   exit 0
 fi
 

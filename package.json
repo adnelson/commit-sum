@@ -1,5 +1,5 @@
 {
-  "name": "gen-commit",
+  "name": "what-commit",
   "version": "0.0.1",
   "description": "Generate a commit message with OpenAI",
   "author": "Allen Nelson",
@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "gen-commit": "dist/index.js"
+    "what-commit": "dist/index.js"
   },
   "files": [
     "dist"
@@ -32,6 +32,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && esbuild index.ts --bundle --platform=node --outfile=dist/index.js",
+    "prepublishOnly": "yarn build",
     "prepare": "git config --local core.hooksPath ./hooks"
   },
   "lint-staged": {
