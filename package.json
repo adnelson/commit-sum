@@ -1,6 +1,6 @@
 {
   "name": "commit-sum",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Generate a commit message with OpenAI",
   "author": "Allen Nelson",
   "license": "MIT",
@@ -31,7 +31,7 @@
     "zod": "^4.0.10"
   },
   "scripts": {
-    "build": "rm -rf dist && esbuild index.ts --bundle --platform=node --outfile=dist/index.js",
+    "build": "rm -rf dist && esbuild index.ts --bundle --platform=node --outfile=dist/index.js --banner:js='#!/usr/bin/env node'",
     "prepublishOnly": "yarn build",
     "prepare": "git config --local core.hooksPath ./hooks"
   },
