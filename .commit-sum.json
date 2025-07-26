@@ -1,0 +1,5 @@
+{
+  "guidance": "Don't try to justify changes with subjective language such as 'for clarity', 'for maintainability', 'for consistency', 'for readability', 'for better customization' etc. Just summarize what the changes were. If there are more than two logical changes made, use a single sentence summary followed by a bullet point for each change",
+  "minWords": 10,
+  "maxWords": 100
+}

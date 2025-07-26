@@ -15,11 +15,13 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // Use this variable as a flag to detect if we're running inside of an invocation of git commit.
 const isGitCommit = !!process.env.GIT_EXEC_PATH;
 
-type Options = {
-  dir: string;
-  from: "modified" | "staged" | "all";
-  maxWords?: number;
-};
+const dotfileSchema = z.object({
+  minWords: z.number().optional(),
+  maxWords: z.number().optional(),
+  guidance: z.string().optional(),
+});
+
+type Options = z.infer<typeof dotfileSchema>;
 
 const LOCK_FILES = [
   "yarn.lock",
@@ -31,30 +33,38 @@ const LOCK_FILES = [
   "uv.lock",
 ];
 
-async function main(options: Options) {
-  process.chdir(options.dir);
+async function main(
+  from: "modified" | "staged" | "all",
+  { guidance, minWords, maxWords }: Options,
+) {
   const git = simpleGit();
 
   const diffOpts = [];
   for (const f of LOCK_FILES) {
     if (fs.existsSync(f)) diffOpts.push(`:!${f}`);
   }
-  if (options.from === "staged") {
+  if (from === "staged") {
     diffOpts.unshift("--staged");
-  } else if (options.from === "all") {
+  } else if (from === "all") {
     diffOpts.unshift("HEAD");
   }
   const diff = await git.diff(diffOpts);
 
   if (!diff.trim()) {
-    console.error(`No changes found (mode=${options.from})`);
+    console.error(`No changes found (mode=${from})`);
     process.exit(1);
   }
 
-  let prompt =
-    "Based on the following diff, generate a git commit message. Your answer should be in the form of a JSON object with a single key, `message`.";
-  if (options.maxWords) {
-    prompt += ` The message should be no more than ${options.maxWords} words.`;
+  const prompt = [
+    "Based on the following diff, generate a git commit message. Your answer should be in the form of a JSON object with a single key, `message`",
+  ];
+  if (guidance) prompt.push(guidance);
+  if (minWords && maxWords) {
+    prompt.push(`The message should be between ${minWords} and ${maxWords} words`);
+  } else if (minWords) {
+    prompt.push(`The message should be at least ${minWords} words`);
+  } else if (maxWords) {
+    prompt.push(`The message should be no more than ${maxWords} words`);
   }
 
   const response = await client.chat.completions.create({
@@ -62,7 +72,7 @@ async function main(options: Options) {
     messages: [
       {
         role: "user",
-        content: prompt + "\n\n```\n" + diff + "\n```\n",
+        content: prompt.join(". ") + "\n\n```\n" + diff + "\n```\n",
       },
     ],
     response_format: { type: "json_object" },
@@ -84,6 +94,8 @@ async function main(options: Options) {
 
 const program = new Command();
 
+const OPTIONS_FILE = ".commit-sum.json";
+
 program
   .name("commit-sum")
   .description("Generate a commit message with OpenAI")
@@ -91,14 +103,31 @@ program
   .option("--modified", "Summarize modified files (i.e. unstaged)")
   .option("--all", "Summarize all changes, both staged and unstaged")
   .option("--staged", "Summarize staged files (default)")
-  .option("--max-words <number>", "Maximum number of words in the commit message")
-  .action(async (directory, options) => {
-    const dir = directory || process.cwd();
-    const from = options.modified ? "modified" : options.all ? "all" : "staged";
+  .option("--guidance <string>", "Give extra guidance to the AI to customize the message")
+  .option("--min-words <number>", "Minimum number of words in the message")
+  .option("--max-words <number>", "Maximum number of words in the message")
+  .action(async (directory, cliOptions) => {
+    if (directory) process.chdir(directory);
 
-    const maxWords = options.maxWords ? parseInt(options.maxWords) : undefined;
+    const from = cliOptions.modified ? "modified" : cliOptions.all ? "all" : "staged";
+    const guidance = cliOptions.guidance ?? process.env.GUIDANCE;
+    const minWords = cliOptions.minWords ? parseInt(cliOptions.minWords) : undefined;
+    const maxWords = cliOptions.maxWords ? parseInt(cliOptions.maxWords) : undefined;
 
-    await main({ dir, from, maxWords });
+    const options: Options = { guidance, minWords, maxWords };
+    if (fs.existsSync(OPTIONS_FILE)) {
+      const optionsStr = fs.readFileSync(OPTIONS_FILE, "utf-8");
+      try {
+        const parsed = dotfileSchema.parse(JSON.parse(optionsStr));
+        options.guidance ??= parsed.guidance;
+        options.minWords ??= parsed.minWords;
+        options.maxWords ??= parsed.maxWords;
+      } catch (e) {
+        console.warn(`Error parsing ${OPTIONS_FILE}:`, e);
+      }
+    }
+
+    await main(from, options);
   });
 
 program.parse();
